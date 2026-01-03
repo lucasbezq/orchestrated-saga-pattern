@@ -1,2 +1,6 @@
 server:
   port: 3000
+
+spring:
+  mongodb:
+    uri: ${MONGO_URI:mongodb://localhost:27017/order-db}
