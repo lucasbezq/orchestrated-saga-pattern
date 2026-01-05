@@ -2,5 +2,22 @@ server:
   port: 3000
 
 spring:
-  mongodb:
-    uri: ${MONGO_URI:mongodb://localhost:27017/order-db}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    topic:
+      start-saga: start-saga
+      notify-ending: notify-ending
+    consumer:
+      group-id: order-group
+      auto-offset-reset: latest
+
+  data:
+    mongodb:
+      database: admin
+      uri: ${MONGODB_URI:mongodb://localhost:27017/orderdb}
+
+logging:
+    level:
+      org:
+        apache:
+          kafka: OFF
