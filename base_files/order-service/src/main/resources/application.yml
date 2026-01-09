@@ -3,7 +3,7 @@ server:
 
 spring:
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BROKER:localhost:9092}
     topic:
       start-saga: start-saga
       notify-ending: notify-ending
@@ -14,7 +14,7 @@ spring:
   data:
     mongodb:
       database: admin
-      uri: ${MONGODB_URI:mongodb://localhost:27017/orderdb}
+      uri: ${MONGODB_URI:mongodb://admin:123456@localhost:27017}
 
 logging:
     level:
