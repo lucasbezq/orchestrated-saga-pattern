@@ -115,11 +115,11 @@ services:
     ports:
       - "8080:8080"
 
-  production-validation-service:
-    build: ./production-validation-service
-    container_name: production-validation-service
+  product-validation-service:
+    build: ./product-validation-service
+    container_name: product-validation-service
     depends_on:
-      - production-db
+      - product-db
       - kafka
     networks:
       - orchestrator-saga
@@ -160,7 +160,7 @@ services:
       - orchestrator-saga
     environment:
       - KAFKA_BROKER=kafka:29092
-      - DB_HOST=payment-db
+      - DB_HOST=inventory-db
       - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=postgres
