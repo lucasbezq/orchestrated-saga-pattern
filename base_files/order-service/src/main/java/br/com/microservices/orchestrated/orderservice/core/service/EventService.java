@@ -1,12 +1,15 @@
 package br.com.microservices.orchestrated.orderservice.core.service;
 
+import br.com.microservices.orchestrated.orderservice.config.exception.ValidationException;
 import br.com.microservices.orchestrated.orderservice.core.document.Event;
+import br.com.microservices.orchestrated.orderservice.core.dto.EventFilters;
 import br.com.microservices.orchestrated.orderservice.core.repository.EventRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -20,6 +23,32 @@ public class EventService {
         event.setCreatedAt(LocalDateTime.now());
         save(event);
         log.info("order [{}] with saga notified! Transaction ID: [{}]", event.getOrderId(), event.getTransactionId());
+    }
+
+    public List<Event> findAll() {
+        return eventRepository.findAllOrderByCreatedAtDesc();
+    }
+
+    public Event findByFilters(EventFilters filters) {
+        validateEmptyFilters(filters);
+        if (!filters.getOrderId().isEmpty()) return findByOrderId(filters.getOrderId());
+        else return findByTransactionId(filters.getTransactionId());
+    }
+
+    private Event findByOrderId(String orderId) {
+        return eventRepository.findTop1ByOrderIdOrderByCreatedAtDesc(orderId)
+                .orElseThrow(() -> new ValidationException("No event found for OrderID: " + orderId));
+    }
+
+    private Event findByTransactionId(String transactionId) {
+        return eventRepository.findTop1ByTransactionIdOrderByCreatedAtDesc(transactionId)
+                .orElseThrow(() -> new ValidationException("No event found for TransactionID: " + transactionId));
+    }
+
+    private void validateEmptyFilters(EventFilters filters) {
+        if (filters.getOrderId().isEmpty() && filters.getTransactionId().isEmpty()) {
+            throw new ValidationException("OrderID or TransactionID must be provided");
+        }
     }
 
     public Event save(Event event) {
