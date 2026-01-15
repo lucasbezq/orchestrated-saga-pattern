@@ -26,7 +26,7 @@ public class EventService {
     }
 
     public List<Event> findAll() {
-        return eventRepository.findAllOrderByCreatedAtDesc();
+        return eventRepository.findAllByOrderByCreatedAtDesc();
     }
 
     public Event findByFilters(EventFilters filters) {
