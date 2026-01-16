@@ -1,4 +1,4 @@
-# Microsserviços: Implementação do Padrão Saga Orquestrado
+# WIP: Microsserviços: Implementação do Padrão Saga Orquestrado
 
 ![Arquitetura Proposta](https://github.com/user-attachments/assets/e019b478-1edc-4a1d-bd85-827f31e2abdc)
 
@@ -59,11 +59,3 @@ A solução é composta por **5 microsserviços** que interagem de forma coorden
 2.  **Falha (Rollback):** Se o `Payment-Service` falhar, o Orquestrador consome esse evento e envia um comando de compensação para o `Product-Validation` e `Inventory` para desfazer as reservas, garantindo a integridade dos dados.
 
 ---
-
-## 🚀 Como Executar
-
-Toda a infraestrutura (Bancos de dados e Kafka) e os serviços estão configurados para subir via Docker.
-
-```bash
-# Para subir todos os serviços e infraestrutura
-docker-compose up -d --build
