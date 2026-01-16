@@ -4,18 +4,20 @@ import br.com.microservices.orchestrated.productvalidationservice.config.excepti
 import br.com.microservices.orchestrated.productvalidationservice.core.dto.Event;
 import br.com.microservices.orchestrated.productvalidationservice.core.dto.History;
 import br.com.microservices.orchestrated.productvalidationservice.core.dto.OrderProducts;
+import br.com.microservices.orchestrated.productvalidationservice.core.enums.SagaStatus;
 import br.com.microservices.orchestrated.productvalidationservice.core.model.ProductRepository;
 import br.com.microservices.orchestrated.productvalidationservice.core.model.Validation;
 import br.com.microservices.orchestrated.productvalidationservice.core.model.ValidationRepository;
 import br.com.microservices.orchestrated.productvalidationservice.core.producer.KafkaProducer;
 import br.com.microservices.orchestrated.productvalidationservice.core.utils.JsonUtil;
+import jdk.jshell.Snippet;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
-import static br.com.microservices.orchestrated.productvalidationservice.core.enums.SagaStatus.SUCCESS;
+import static br.com.microservices.orchestrated.productvalidationservice.core.enums.SagaStatus.*;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
 @Slf4j
@@ -38,7 +40,7 @@ public class ProductValidationService {
 
         } catch (Exception e) {
             log.error("Error validating existing products: ", e);
-//          handleFailCurrentNotExecuted(event, e.getMessage());
+            handleFailCurrentNotExecuted(event, e.getMessage());
         }
 
         kafkaProducer.sendEvent(jsonUtil.toJson(event));
@@ -104,6 +106,31 @@ public class ProductValidationService {
                 .build();
 
         event.addToHistory(history);
+    }
+
+    private void handleFailCurrentNotExecuted(Event event, String message) {
+        event.setStatus(ROLLBACK_PENDING);
+        event.setSource(CURRENT_SOURCE);
+        addHistory(event, "Fail to validate products: " + message);
+    }
+
+    public void rollbackEvent(Event event) {
+        changeValidationToFail(event);
+        event.setStatus(FAIL);
+        event.setSource(CURRENT_SOURCE);
+        addHistory(event, "Rollback executed on product validation!");
+
+        kafkaProducer.sendEvent(jsonUtil.toJson(event));
+    }
+
+    private void changeValidationToFail(Event event) {
+        validationRepository
+                .findByOrderIdAndTransactionId(event.getPayload().getId(), event.getTransactionId())
+                .ifPresentOrElse(validation -> {
+                    validation.setSuccess(false);
+                    validationRepository.save(validation);
+                }, () -> createValidation(event, false));
+
     }
 
 }
