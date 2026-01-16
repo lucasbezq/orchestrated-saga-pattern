@@ -13,7 +13,7 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long ids;
+    private Long id;
 
     @Column(nullable = false)
     private String code;
