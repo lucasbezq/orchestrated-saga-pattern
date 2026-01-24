@@ -72,8 +72,8 @@ public class PaymentService {
                 .getProducts()
                 .stream()
                 .map(product -> product.getProduct()
-                                .getUnitValue()
-                                .multiply(BigDecimal.valueOf(product.getQuantity()))
+                        .getUnitValue()
+                        .multiply(BigDecimal.valueOf(product.getQuantity()))
                 )
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
@@ -126,10 +126,15 @@ public class PaymentService {
     }
 
     public void realizeRefund(Event event) {
-        changePaymentStatusToRefund(event);
         event.setStatus(FAIL);
         event.setSource(CURRENT_SOURCE);
-        addHistory(event, "Rollback: Payment refunded successfully.");
+        try {
+            changePaymentStatusToRefund(event);
+            addHistory(event, "Payment refunded successfully.");
+        } catch (Exception e) {
+            log.error("Error trying to refund payment: ", e);
+            addHistory(event, "Fail to refund payment: " + e.getMessage());
+        }
         kafkaProducer.sendEvent(jsonUtil.toJson(event));
     }
 
