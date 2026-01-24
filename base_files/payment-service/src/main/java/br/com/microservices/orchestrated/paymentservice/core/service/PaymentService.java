@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import static br.com.microservices.orchestrated.paymentservice.core.enums.SagaStatus.SUCCESS;
+import static br.com.microservices.orchestrated.paymentservice.core.enums.SagaStatus.*;
 
 @Slf4j
 @Service
@@ -43,6 +43,7 @@ public class PaymentService {
             handleSuccess(event);
         } catch (Exception e) {
             log.error("Error trying to make payment: ", e);
+            handleFailCurrentNotExecuted(event, e.getMessage());
         }
         kafkaProducer.sendEvent(jsonUtil.toJson(event));
     }
@@ -116,6 +117,27 @@ public class PaymentService {
                 .build();
 
         event.addToHistory(history);
+    }
+
+    private void handleFailCurrentNotExecuted(Event event, String message) {
+        event.setStatus(ROLLBACK_PENDING);
+        event.setSource(CURRENT_SOURCE);
+        addHistory(event, "Fail to realize payment: " + message);
+    }
+
+    public void realizeRefund(Event event) {
+        changePaymentStatusToRefund(event);
+        event.setStatus(FAIL);
+        event.setSource(CURRENT_SOURCE);
+        addHistory(event, "Rollback: Payment refunded successfully.");
+        kafkaProducer.sendEvent(jsonUtil.toJson(event));
+    }
+
+    private void changePaymentStatusToRefund(Event event) {
+        var payment = findByOrderIdAndTransactionId(event);
+        payment.setPaymentStatus(PaymentStatus.REFUND);
+        setEventAmountItems(event, payment);
+        save(payment);
     }
 
     private Payment findByOrderIdAndTransactionId(Event event) {
