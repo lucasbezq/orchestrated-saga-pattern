@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -15,6 +17,6 @@ public class History {
     private String source;
     private SagaStatus status;
     private String message;
-    private String createdAt;
+    private LocalDateTime createdAt;
 
 }
